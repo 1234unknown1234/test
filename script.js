@@ -1,12 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const pdfSelector = document.getElementById('pdfSelector');
+    const pdfList = document.getElementById('pdfList');
     const pdfEmbed = document.getElementById('pdfEmbed');
-    const viewBtn = document.getElementById('viewBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
 
     // GitHub repository details
-    const user = '1234unknown1234';
-    const repo = 'test';
+    const user = 'your-username';
+    const repo = 'your-repository';
     const branch = 'main';  // or the branch you are using
 
     // Fetch the list of PDF files from the GitHub API
@@ -37,37 +35,33 @@ document.addEventListener('DOMContentLoaded', () => {
                 .filter(file => file.path.endsWith('.pdf'))
                 .map(file => file.path);
 
-            // Populate the dropdown with PDF files
+            // Create buttons for each PDF file
             pdfFiles.forEach(file => {
-                const option = document.createElement('option');
-                option.value = file;
-                option.textContent = file.split('/').pop(); // Display only the file name
-                pdfSelector.appendChild(option);
+                const button = document.createElement('button');
+                button.classList.add('pdf-button');
+                button.textContent = file.split('/').pop(); // Display only the file name
+                button.onclick = () => {
+                    pdfEmbed.src = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${file}`;
+                    pdfEmbed.style.display = 'block';
+                };
+
+                const downloadBtn = document.createElement('button');
+                downloadBtn.classList.add('pdf-button');
+                downloadBtn.textContent = `Download ${file.split('/').pop()}`;
+                downloadBtn.onclick = () => {
+                    const link = document.createElement('a');
+                    link.href = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${file}`;
+                    link.download = file.split('/').pop(); // Download only the file name
+                    link.click();
+                };
+
+                const container = document.createElement('div');
+                container.appendChild(button);
+                container.appendChild(downloadBtn);
+                pdfList.appendChild(container);
             });
         })
         .catch(error => {
             console.error('Error fetching PDF files:', error);
         });
-
-    // Handle the view button click
-    viewBtn.addEventListener('click', () => {
-        const selectedPDF = pdfSelector.value;
-        if (selectedPDF) {
-            pdfEmbed.src = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${selectedPDF}`;
-            pdfEmbed.style.display = 'block';
-        } else {
-            pdfEmbed.style.display = 'none';
-        }
-    });
-
-    // Handle the download button click
-    downloadBtn.addEventListener('click', () => {
-        const selectedPDF = pdfSelector.value;
-        if (selectedPDF) {
-            const link = document.createElement('a');
-            link.href = `https://raw.githubusercontent.com/${user}/${repo}/${branch}/${selectedPDF}`;
-            link.download = selectedPDF.split('/').pop(); // Download only the file name
-            link.click();
-        }
-    });
 });
