@@ -5,8 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadBtn = document.getElementById('downloadBtn');
 
     // GitHub repository details
-    const user = 'your-username';
-    const repo = 'your-repository';
+    const user = '1234unknown1234';
+    const repo = 'test';
     const branch = 'main';  // or the branch you are using
 
     // Fetch the list of PDF files from the GitHub API
