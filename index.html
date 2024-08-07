@@ -3,19 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Viewer</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>GitHub PDF Viewer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        #pdf-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .pdf-item {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            margin: 10px;
+            padding: 20px;
+            width: 300px;
+            text-align: center;
+        }
+        .pdf-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .pdf-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+        .download-btn {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>PDF Viewer</h1>
-        <div id="pdfList" class="pdf-list">
-            <!-- PDF buttons will be appended here -->
-        </div>
-        <div id="pdfViewer" class="pdf-viewer">
-            <embed id="pdfEmbed" src="" type="application/pdf" width="600" height="500">
-        </div>
-    </div>
-    <script src="script.js"></script>
+    <h1>GitHub PDF Viewer</h1>
+    <div id="pdf-list"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <script>
+        const githubUsername = 'YOUR_GITHUB_USERNAME';
+        const repoName = 'YOUR_REPO_NAME';
+        const pdfDirectory = 'PATH_TO_PDF_DIRECTORY';
+
+        async function fetchPDFList() {
+            const apiUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${pdfDirectory}`;
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            return data.filter(file => file.name.toLowerCase().endsWith('.pdf'));
+        }
+
+        async function renderPDFList() {
+            const pdfList = await fetchPDFList();
+            const pdfListElement = document.getElementById('pdf-list');
+
+            for (const pdf of pdfList) {
+                const pdfItem = document.createElement('div');
+                pdfItem.className = 'pdf-item';
+
+                const pdfName = document.createElement('div');
+                pdfName.className = 'pdf-name';
+                pdfName.textContent = pdf.name;
+
+                const pdfPreview = document.createElement('canvas');
+                pdfPreview.className = 'pdf-preview';
+
+                const downloadBtn = document.createElement('a');
+                downloadBtn.className = 'download-btn';
+                downloadBtn.href = pdf.download_url;
+                downloadBtn.textContent = 'Download';
+                downloadBtn.setAttribute('download', '');
+
+                pdfItem.appendChild(pdfName);
+                pdfItem.appendChild(pdfPreview);
+                pdfItem.appendChild(downloadBtn);
+
+                pdfListElement.appendChild(pdfItem);
+
+                // Generate PDF preview
+                const loadingTask = pdfjsLib.getDocument(pdf.download_url);
+                loadingTask.promise.then(function(pdf) {
+                    pdf.getPage(1).then(function(page) {
+                        const scale = 1.5;
+                        const viewport = page.getViewport({scale: scale});
+
+                        const canvas = pdfPreview;
+                        const context = canvas.getContext('2d');
+                        canvas.height = viewport.height;
+                        canvas.width = viewport.width;
+
+                        const renderContext = {
+                            canvasContext: context,
+                            viewport: viewport
+                        };
+                        page.render(renderContext);
+                    });
+                });
+            }
+        }
+
+        renderPDFList();
+    </script>
 </body>
 </html>
