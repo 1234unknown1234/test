@@ -58,68 +58,89 @@
     <div id="pdf-list"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-    <script>
-        const githubUsername = '1234unknown1234';
-        const repoName = 'test';
-        const pdfDirectory = '';
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+<script>
+    const githubUsername = '1234unknown1234';
+    const repoName = 'test';
+    const pdfDirectory = ''; // Empty string for root directory
 
-        async function fetchPDFList() {
-            const apiUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${pdfDirectory}`;
+    async function fetchPDFList() {
+        const apiUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${pdfDirectory}`;
+        try {
             const response = await fetch(apiUrl);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
+            if (!Array.isArray(data)) {
+                throw new Error('Received data is not an array');
+            }
             return data.filter(file => file.name.toLowerCase().endsWith('.pdf'));
+        } catch (error) {
+            console.error('Error fetching PDF list:', error);
+            return []; // Return an empty array if there's an error
+        }
+    }
+
+    async function renderPDFList() {
+        const pdfList = await fetchPDFList();
+        const pdfListElement = document.getElementById('pdf-list');
+
+        if (pdfList.length === 0) {
+            pdfListElement.innerHTML = '<p>No PDF files found or there was an error fetching the files.</p>';
+            return;
         }
 
-        async function renderPDFList() {
-            const pdfList = await fetchPDFList();
-            const pdfListElement = document.getElementById('pdf-list');
+        for (const pdf of pdfList) {
+            const pdfItem = document.createElement('div');
+            pdfItem.className = 'pdf-item';
 
-            for (const pdf of pdfList) {
-                const pdfItem = document.createElement('div');
-                pdfItem.className = 'pdf-item';
+            const pdfName = document.createElement('div');
+            pdfName.className = 'pdf-name';
+            pdfName.textContent = pdf.name;
 
-                const pdfName = document.createElement('div');
-                pdfName.className = 'pdf-name';
-                pdfName.textContent = pdf.name;
+            const pdfPreview = document.createElement('canvas');
+            pdfPreview.className = 'pdf-preview';
 
-                const pdfPreview = document.createElement('canvas');
-                pdfPreview.className = 'pdf-preview';
+            const downloadBtn = document.createElement('a');
+            downloadBtn.className = 'download-btn';
+            downloadBtn.href = pdf.download_url;
+            downloadBtn.textContent = 'Download';
+            downloadBtn.setAttribute('download', '');
 
-                const downloadBtn = document.createElement('a');
-                downloadBtn.className = 'download-btn';
-                downloadBtn.href = pdf.download_url;
-                downloadBtn.textContent = 'Download';
-                downloadBtn.setAttribute('download', '');
+            pdfItem.appendChild(pdfName);
+            pdfItem.appendChild(pdfPreview);
+            pdfItem.appendChild(downloadBtn);
 
-                pdfItem.appendChild(pdfName);
-                pdfItem.appendChild(pdfPreview);
-                pdfItem.appendChild(downloadBtn);
+            pdfListElement.appendChild(pdfItem);
 
-                pdfListElement.appendChild(pdfItem);
-
-                // Generate PDF preview
+            // Generate PDF preview
+            try {
                 const loadingTask = pdfjsLib.getDocument(pdf.download_url);
-                loadingTask.promise.then(function(pdf) {
-                    pdf.getPage(1).then(function(page) {
-                        const scale = 1.5;
-                        const viewport = page.getViewport({scale: scale});
+                const pdfDocument = await loadingTask.promise;
+                const page = await pdfDocument.getPage(1);
+                const scale = 1.5;
+                const viewport = page.getViewport({scale: scale});
 
-                        const canvas = pdfPreview;
-                        const context = canvas.getContext('2d');
-                        canvas.height = viewport.height;
-                        canvas.width = viewport.width;
+                const canvas = pdfPreview;
+                const context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
 
-                        const renderContext = {
-                            canvasContext: context,
-                            viewport: viewport
-                        };
-                        page.render(renderContext);
-                    });
-                });
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                await page.render(renderContext);
+            } catch (error) {
+                console.error(`Error rendering preview for ${pdf.name}:`, error);
+                pdfPreview.insertAdjacentHTML('afterend', '<p>Preview not available</p>');
             }
         }
+    }
 
-        renderPDFList();
-    </script>
+    renderPDFList();
+</script>
+
 </body>
 </html>
