@@ -10,9 +10,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const branch = 'main';  // or the branch you are using
 
     // Fetch the list of PDF files from the GitHub API
-    fetch(`https://api.github.com/repos/${user}/${repo}/git/trees/${branch}?recursive=1`)
-        .then(response => response.json())
+    fetch(`https://api.github.com/repos/${user}/${repo}/branches/${branch}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log(data);  // Debugging log
+            const treeUrl = data.commit.commit.tree.url;
+            return fetch(treeUrl + '?recursive=1');
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);  // Debugging log
+            if (!data.tree) {
+                throw new Error('No tree data found');
+            }
             const pdfFiles = data.tree
                 .filter(file => file.path.endsWith('.pdf'))
                 .map(file => file.path);
@@ -24,6 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 option.textContent = file.split('/').pop(); // Display only the file name
                 pdfSelector.appendChild(option);
             });
+        })
+        .catch(error => {
+            console.error('Error fetching PDF files:', error);
         });
 
     // Handle the view button click
