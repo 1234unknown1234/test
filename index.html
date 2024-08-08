@@ -158,42 +158,45 @@
                 }
             }
         }
-
         async function uploadPDF(file) {
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                const content = e.target.result.split(',')[1]; // Get base64 content
-                const filename = file.name;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        const content = e.target.result.split(',')[1]; // Get base64 content
+        const filename = file.name;
 
-                const apiUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${pdfDirectory}${filename}`;
-                const data = {
-                    message: `Upload ${filename}`,
-                    content: content
-                };
+        const apiUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${pdfDirectory}${filename}`;
+        const data = {
+            message: `Upload ${filename}`,
+            content: content
+        };
 
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': `token ${githubToken}`,
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(data)
-                    });
+        try {
+            const response = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+            }
 
-                    alert('File uploaded successfully!');
-                    renderPDFList(); // Refresh the PDF list
-                } catch (error) {
-                    console.error('Error uploading file:', error);
-                    alert('Error uploading file. Please try again.');
-                }
-            };
-            reader.readAsDataURL(file);
+            alert('File uploaded successfully!');
+            renderPDFList(); // Refresh the PDF list
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert(`Error uploading file: ${error.message}`);
         }
+    };
+    reader.readAsDataURL(file);
+}
+
+        
+        
 
         document.getElementById('upload-btn').addEventListener('click', () => {
             const fileInput = document.getElementById('file-input');
