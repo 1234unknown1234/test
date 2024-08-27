@@ -3,58 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload File - Branch 1, Semester 1</title>
+    <title>Login Page</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .login-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>Upload File - Branch 1, Semester 1</h1>
-    <button id="google-signin-button">Sign in with Google</button>
-    
-    <div id="upload-section" style="display:none;">
-        <input type="file" id="file-input">
-        <button onclick="uploadFile()">Upload File</button>
+    <div class="login-container">
+        <h1>Login</h1>
+        <div id="g_id_onload"
+             data-client_id="YOUR_GOOGLE_CLIENT_ID"
+             data-callback="handleCredentialResponse">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
     </div>
-    
+
     <script>
-        const clientId = '881848212032-mut1t2din1e1k8upv6n1n4vb6bft8m24.apps.googleusercontent.com'; // Replace with your Google Client ID
-        const redirectUri = 'https://1234unknown1234.github.io/sample/';
-        const oauthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=email profile&access_type=offline`;
-
-        document.getElementById('google-signin-button').onclick = function() {
-            window.location.href = oauthUrl;
-        };
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-
-        if (code) {
-            // Display the upload section if the user is authenticated
-            document.getElementById('upload-section').style.display = 'block';
-            document.getElementById('google-signin-button').style.display = 'none';
-
-            // Exchange the authorization code for an access token (Example only, actual implementation will require server-side code)
-            // fetch('https://oauth2.googleapis.com/token', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/x-www-form-urlencoded'
-            //     },
-            //     body: `code=${code}&client_id=${clientId}&client_secret=YOUR_CLIENT_SECRET&redirect_uri=${redirectUri}&grant_type=authorization_code`
-            // }).then(response => response.json())
-            //   .then(data => {
-            //       console.log('Access Token:', data.access_token);
-            //       // Use the access token to authorize the file upload
-            //   });
-        }
-
-        function uploadFile() {
-            const file = document.getElementById('file-input').files[0];
-            if (!file) {
-                alert("Please select a file to upload");
-                return;
-            }
-
-            // Handle the file upload (this is just a placeholder, actual implementation will vary)
-            console.log('Uploading file:', file.name);
-            alert("File uploaded successfully!");
+        function handleCredentialResponse(response) {
+            // Send the ID token to your server
+            const id_token = response.credential;
+            console.log("ID Token: ", id_token);
+            
+            // Here you would typically send the token to your server for verification
+            // and user authentication. For demonstration, we'll just log it.
+            
+            // After successful authentication, you can redirect the user or update the UI
+            // window.location.href = '/dashboard';
         }
     </script>
 </body>
