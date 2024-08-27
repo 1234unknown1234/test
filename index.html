@@ -1,54 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f0f0f0;
-        }
-        .login-container {
-            background-color: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-    </style>
+    <title>File Upload</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="login-container">
-        <h1>Login</h1>
-        <div id="g_id_onload"
-             data-client_id="881848212032-mut1t2din1e1k8upv6n1n4vb6bft8m24.apps.googleusercontent.com"
-             data-callback="handleCredentialResponse">
-        </div>
-        <div class="g_id_signin" data-type="standard"></div>
-    </div>
 
-    <script>
-        function handleCredentialResponse(response) {
-            // Send the ID token to your server
-            const id_token = response.credential;
-            console.log("ID Token: ", id_token);
-            
-            // Here you would typically send the token to your server for verification
-            // and user authentication. For demonstration, we'll just log it.
-            
-            // After successful authentication, you can redirect the user or update the UI
-            // window.location.href = '/dashboard';
-        }
-    </script>
+<body>
+    <div class="container">
+        <h1>File Upload</h1>
+        <div class="file-list" id="fileList"></div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <input type="file" id="fileInput" multiple style="display: none;">
+        <button class="upload-btn" id="uploadBtn" onclick="handleButtonClick()">
+            Choose and Upload Files
+            <span class="spinner" id="spinner" style="display: none;"></span>
+        </button>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="script.js"></script>
 </body>
+
 </html>
