@@ -3,216 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub PDF Viewer and Uploader</title>
+    <title>Google Sign-In Example</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: #f0f0f0;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-        }
-        #pdf-list {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .pdf-item, #upload-box {
-            background-color: #2a2a2a;
-            border-radius: 10px;
-            margin: 10px;
-            padding: 20px;
-            width: 300px;
-            text-align: center;
-        }
-        .pdf-name {
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .pdf-preview {
-            width: 100%;
-            height: 200px;
-            object-fit: contain;
-            margin-bottom: 10px;
-        }
-        .download-btn, #upload-btn {
-            background-color: #4CAF50;
-            border: none;
-            color: white;
-            padding: 10px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        #file-input {
+        .user-info {
             display: none;
+            margin-top: 20px;
         }
-        #upload-label {
-            display: inline-block;
-            background-color: #2196F3;
-            color: white;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 5px;
-            margin-bottom: 10px;
+        .user-info img {
+            border-radius: 50%;
+            width: 100px;
         }
     </style>
+    <script>
+        function handleCredentialResponse(response) {
+            try {
+                const user_info = parseJwt(response.credential);
+
+                // Display user info on the page
+                document.getElementById('user-name').innerText = `Name: ${user_info.name}`;
+                document.getElementById('user-email').innerText = `Email: ${user_info.email}`;
+                document.getElementById('user-picture').src = user_info.picture;
+
+                // Show the user info section
+                document.querySelector('.user-info').style.display = 'block';
+            } catch (error) {
+                console.error("Error processing JWT:", error);
+            }
+        }
+
+        function parseJwt(token) {
+            var base64Url = token.split('.')[1];
+            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+
+            return JSON.parse(jsonPayload);
+        }
+    </script>
 </head>
 <body>
-    <h1>GitHub PDF Viewer and Uploader</h1>
-    <div id="upload-box">
-        <h2>Upload PDF</h2>
-        <label for="file-input" id="upload-label">Choose File</label>
-        <input type="file" id="file-input" accept=".pdf">
-        <button id="upload-btn">Upload</button>
+    <div id="g_id_onload"
+         data-client_id="881848212032-mut1t2din1e1k8upv6n1n4vb6bft8m24.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse">
     </div>
-    <div id="pdf-list"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
-    <script>
-        const githubUsername = '1234unknown1234';
-        const repoName = 'test';
-        const pdfDirectory = '';
-        const githubToken = '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'; // Replace with your GitHub personal access token
+    <div class="g_id_signin" data-type="standard"></div>
 
-        async function fetchPDFList() {
-            const apiUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${pdfDirectory}`;
-            try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                if (!Array.isArray(data)) {
-                    throw new Error('Received data is not an array');
-                }
-                return data.filter(file => file.name.toLowerCase().endsWith('.pdf'));
-            } catch (error) {
-                console.error('Error fetching PDF list:', error);
-                return [];
-            }
-        }
-
-        async function renderPDFList() {
-            const pdfList = await fetchPDFList();
-            const pdfListElement = document.getElementById('pdf-list');
-
-            pdfListElement.innerHTML = '';
-
-            if (pdfList.length === 0) {
-                pdfListElement.innerHTML = '<p>No PDF files found or there was an error fetching the files.</p>';
-                return;
-            }
-
-            for (const pdf of pdfList) {
-                const pdfItem = document.createElement('div');
-                pdfItem.className = 'pdf-item';
-
-                const pdfName = document.createElement('div');
-                pdfName.className = 'pdf-name';
-                pdfName.textContent = pdf.name;
-
-                const pdfPreview = document.createElement('canvas');
-                pdfPreview.className = 'pdf-preview';
-
-                const downloadBtn = document.createElement('a');
-                downloadBtn.className = 'download-btn';
-                downloadBtn.href = pdf.download_url;
-                downloadBtn.textContent = 'Download';
-                downloadBtn.setAttribute('download', '');
-
-                pdfItem.appendChild(pdfName);
-                pdfItem.appendChild(pdfPreview);
-                pdfItem.appendChild(downloadBtn);
-
-                pdfListElement.appendChild(pdfItem);
-
-                // Generate PDF preview
-                try {
-                    const loadingTask = pdfjsLib.getDocument(pdf.download_url);
-                    const pdfDocument = await loadingTask.promise;
-                    const page = await pdfDocument.getPage(1);
-                    const scale = 1.5;
-                    const viewport = page.getViewport({scale: scale});
-
-                    const canvas = pdfPreview;
-                    const context = canvas.getContext('2d');
-                    canvas.height = viewport.height;
-                    canvas.width = viewport.width;
-
-                    const renderContext = {
-                        canvasContext: context,
-                        viewport: viewport
-                    };
-                    await page.render(renderContext);
-                } catch (error) {
-                    console.error(`Error rendering preview for ${pdf.name}:`, error);
-                    pdfPreview.insertAdjacentHTML('afterend', '<p>Preview not available</p>');
-                }
-            }
-        }
-        async function uploadPDF(file) {
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        const content = e.target.result.split(',')[1]; // Get base64 content
-        const filename = file.name;
-
-        const apiUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents/${pdfDirectory}${filename}`;
-        const data = {
-            message: `Upload ${filename}`,
-            content: content
-        };
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `token ${githubToken}`,
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
-
-            alert('File uploaded successfully!');
-            renderPDFList(); // Refresh the PDF list
-        } catch (error) {
-            console.error('Error uploading file:', error);
-            alert(`Error uploading file: ${error.message}`);
-        }
-    };
-    reader.readAsDataURL(file);
-}
-
-        
-        
-
-        document.getElementById('upload-btn').addEventListener('click', () => {
-            const fileInput = document.getElementById('file-input');
-            if (fileInput.files.length > 0) {
-                uploadPDF(fileInput.files[0]);
-            } else {
-                alert('Please select a PDF file to upload.');
-            }
-        });
-
-        document.getElementById('file-input').addEventListener('change', (e) => {
-            const fileName = e.target.files[0]?.name || 'Choose File';
-            document.getElementById('upload-label').textContent = fileName;
-        });
-
-        renderPDFList();
-    </script>
+    <div class="user-info">
+        <h2>User Information:</h2>
+        <p id="user-name"></p>
+        <p id="user-email"></p>
+        <img id="user-picture" alt="User Picture">
+    </div>
 </body>
 </html>
